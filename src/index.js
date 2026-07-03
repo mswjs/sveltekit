@@ -1,5 +1,5 @@
 import { defineAddon, defineAddonOptions } from 'sv'
-import { color, downloadJson, pnpm, transforms } from './sv-utils.js'
+import { color, downloadJson, transforms } from './sv-utils.js'
 
 const options = defineAddonOptions()
   .add('environments', {
@@ -11,16 +11,37 @@ const options = defineAddonOptions()
       {
         value: 'browser',
         label: 'Browser',
-        hint: 'Service Worker request interception',
+        hint: 'Intercept the network in the browser.',
       },
       {
         value: 'node',
         label: 'Node',
-        hint: 'Server-side and test request interception',
+        hint: 'Intercept the network in Node.js (e.g. server, tests).',
       },
     ],
   })
   .build()
+
+const FILES = {
+  handlers: `import { http, HttpResponse } from 'msw';
+
+export const handlers = [
+	http.get('/api/hello', () => {
+		return HttpResponse.text('Hello world!');
+	})
+];
+`,
+  browser: `import { setupWorker } from 'msw/browser';
+import { handlers } from './handlers';
+
+export const worker = setupWorker(...handlers);
+`,
+  node: `import { setupServer } from 'msw/node';
+import { handlers } from './handlers';
+
+export const server = setupServer(...handlers);
+`,
+}
 
 export default defineAddon({
   id: '@msw/sveltekit',
@@ -30,43 +51,29 @@ export default defineAddon({
   options,
 
   setup: ({ isKit, unsupported }) => {
-    if (!isKit) unsupported('Requires SvelteKit')
+    if (!isKit) {
+      unsupported('Requires SvelteKit')
+    }
   },
 
-  run: async ({
-    directory,
-    file,
-    language,
-    options,
-    packageManager: package_manager,
-    sv,
-  }) => {
-    const msw_version = await get_msw_version()
+  run: async ({ directory, file, language, options, sv }) => {
+    const mswVersion = await getMswVersion()
     const extension = language === 'ts' ? 'ts' : 'js'
-    const mocks_directory = `${directory.src}/msw`
+    const mocksDirectory = `${directory.src}/msw`
 
-    sv.devDependency('msw', msw_version)
-    if (package_manager === 'pnpm') {
-      sv.file(file.findUp('pnpm-workspace.yaml'), pnpm.allowBuilds('msw'))
-    }
+    sv.devDependency('msw', mswVersion)
 
-    sv.file(
-      `${mocks_directory}/handlers.${extension}`,
-      seed_file(handlers_content()),
-    )
+    sv.file(`${mocksDirectory}/handlers.${extension}`, seedFile(FILES.handlers))
 
     if (options.environments.includes('browser')) {
-      sv.file(
-        `${mocks_directory}/browser.${extension}`,
-        seed_file(browser_content()),
-      )
-      sv.file(file.package, add_msw_worker_directory())
-      sv.file(`${directory.src}/hooks.client.${extension}`, add_client_hook())
+      sv.file(`${mocksDirectory}/browser.${extension}`, seedFile(FILES.browser))
+      sv.file(file.package, addMswWorkerDirectory())
+      sv.file(`${directory.src}/hooks.client.${extension}`, addClientHook())
     }
 
     if (options.environments.includes('node')) {
-      sv.file(`${mocks_directory}/node.${extension}`, seed_file(node_content()))
-      sv.file(`${directory.src}/hooks.server.${extension}`, add_server_hook())
+      sv.file(`${mocksDirectory}/node.${extension}`, seedFile(FILES.node))
+      sv.file(`${directory.src}/hooks.server.${extension}`, addServerHook())
     }
   },
 
@@ -85,7 +92,7 @@ export default defineAddon({
   },
 })
 
-async function get_msw_version() {
+async function getMswVersion() {
   const { version } = await downloadJson(
     'https://registry.npmjs.org/msw/latest',
   )
@@ -96,48 +103,20 @@ async function get_msw_version() {
  * @param {string} content
  * @returns
  */
-function seed_file(content) {
-  return transforms.text(({ content: existing_content }) => {
-    if (existing_content.trim()) return existing_content
-    return content
+function seedFile(content) {
+  return transforms.text(({ content: existingContent }) => {
+    return existingContent.trim() ? existingContent : content
   })
 }
 
-function handlers_content() {
-  return `import { http, HttpResponse } from 'msw';
-
-export const handlers = [
-	http.get('/api/hello', () => {
-		return HttpResponse.json({ message: 'Hello from MSW' });
-	})
-];
-`
-}
-
-function browser_content() {
-  return `import { setupWorker } from 'msw/browser';
-import { handlers } from './handlers';
-
-export const worker = setupWorker(...handlers);
-`
-}
-
-function node_content() {
-  return `import { setupServer } from 'msw/node';
-import { handlers } from './handlers';
-
-export const server = setupServer(...handlers);
-`
-}
-
-function add_msw_worker_directory() {
+function addMswWorkerDirectory() {
   return transforms.json(({ data }) => {
     data.msw ??= {}
     data.msw.workerDirectory = ['static']
   })
 }
 
-function add_client_hook() {
+function addClientHook() {
   return transforms.script(({ ast, content, js }) => {
     js.imports.addNamed(ast, {
       from: '$app/environment',
@@ -148,7 +127,9 @@ function add_client_hook() {
       imports: ['worker'],
     })
 
-    if (content.includes('worker.start(')) return
+    if (content.includes('worker.start(')) {
+      return
+    }
 
     js.common.appendFromString(ast, {
       code: `export async function init() {
@@ -160,7 +141,7 @@ function add_client_hook() {
   })
 }
 
-function add_server_hook() {
+function addServerHook() {
   return transforms.script(({ ast, js }) => {
     js.imports.addNamed(ast, {
       from: '$app/environment',
