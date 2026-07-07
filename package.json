@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "license": "MIT",
+  "packageManager": "pnpm@11.5.2",
   "scripts": {
     "demo-create": "sv create demo --types ts --template minimal --no-add-ons --no-install",
     "demo-add": "pnpm build && sv add file:../ --cwd demo --no-git-check --no-install",
