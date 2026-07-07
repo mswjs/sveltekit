@@ -1,5 +1,5 @@
 import { defineAddon, defineAddonOptions } from 'sv'
-import { color, downloadJson, transforms, defineEnv } from './sv-utils.js'
+import { color, downloadJson, transforms, defineEnv, pnpm } from './sv-utils.js'
 
 const options = defineAddonOptions()
   .add('environments', {
@@ -64,6 +64,7 @@ export default defineAddon({
     sv,
     cwd,
     dependencyVersion,
+    packageManager,
   }) => {
     const mswVersion = await getMswVersion()
     const extension = language === 'ts' ? 'ts' : 'js'
@@ -72,6 +73,10 @@ export default defineAddon({
     const env = defineEnv({ sv, cwd, dependencyVersion })
 
     sv.devDependency('msw', mswVersion)
+
+    if (packageManager === 'pnpm') {
+      sv.file(file.findUp('pnpm-workspace.yaml'), pnpm.allowBuilds('msw'))
+    }
 
     sv.file(`${mocksDirectory}/handlers.${extension}`, seedFile(FILES.handlers))
 
