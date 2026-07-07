@@ -1,5 +1,5 @@
 import { defineAddon, defineAddonOptions } from 'sv'
-import { color, downloadJson, transforms } from './sv-utils.js'
+import { color, downloadJson, transforms, defineEnv } from './sv-utils.js'
 
 const options = defineAddonOptions()
   .add('environments', {
@@ -56,10 +56,20 @@ export default defineAddon({
     }
   },
 
-  run: async ({ directory, file, language, options, sv }) => {
+  run: async ({
+    directory,
+    file,
+    language,
+    options,
+    sv,
+    cwd,
+    dependencyVersion,
+  }) => {
     const mswVersion = await getMswVersion()
     const extension = language === 'ts' ? 'ts' : 'js'
     const mocksDirectory = `${directory.src}/msw`
+
+    const env = defineEnv({ sv, cwd, dependencyVersion })
 
     sv.devDependency('msw', mswVersion)
 
@@ -68,12 +78,12 @@ export default defineAddon({
     if (options.environments.includes('browser')) {
       sv.file(`${mocksDirectory}/browser.${extension}`, seedFile(FILES.browser))
       sv.file(file.package, addMswWorkerDirectory())
-      sv.file(`${directory.src}/hooks.client.${extension}`, addClientHook())
+      sv.file(`${directory.src}/hooks.client.${extension}`, addClientHook(env))
     }
 
     if (options.environments.includes('node')) {
       sv.file(`${mocksDirectory}/node.${extension}`, seedFile(FILES.node))
-      sv.file(`${directory.src}/hooks.server.${extension}`, addServerHook())
+      sv.file(`${directory.src}/hooks.server.${extension}`, addServerHook(env))
     }
   },
 
@@ -116,12 +126,12 @@ function addMswWorkerDirectory() {
   })
 }
 
-function addClientHook() {
+/**
+ * @param {ReturnType<typeof defineEnv>} env
+ */
+function addClientHook(env) {
   return transforms.script(({ ast, content, js }) => {
-    js.imports.addNamed(ast, {
-      from: '$app/environment',
-      imports: ['dev'],
-    })
+    env.importEnv(ast, js, ['dev'])
     js.imports.addNamed(ast, {
       from: './msw/browser',
       imports: ['worker'],
@@ -141,12 +151,12 @@ function addClientHook() {
   })
 }
 
-function addServerHook() {
+/**
+ * @param {ReturnType<typeof defineEnv>} env
+ */
+function addServerHook(env) {
   return transforms.script(({ ast, js }) => {
-    js.imports.addNamed(ast, {
-      from: '$app/environment',
-      imports: ['dev'],
-    })
+    env.importEnv(ast, js, ['dev'])
     js.imports.addNamed(ast, {
       from: './msw/node',
       imports: { server: 'msw_server' },

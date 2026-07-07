@@ -12,14 +12,14 @@ importers:
         specifier: ^1.59.1
         version: 1.60.0
       '@sveltejs/sv-utils':
-        specifier: latest
-        version: 0.2.2
+        specifier: ^0.3.1
+        version: 0.3.1
       '@types/node':
         specifier: ^25.5.2
         version: 25.9.1
       sv:
-        specifier: latest
-        version: 0.15.3
+        specifier: ^0.16.2
+        version: 0.16.2
       tsdown:
         specifier: ^0.21.7
         version: 0.21.10
@@ -291,8 +291,8 @@ packages:
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
 
-  '@sveltejs/sv-utils@0.2.2':
-    resolution: {integrity: sha512-2rmR7HKhqcMR6vz9eoYPPMgVaKLME2+tZGFsxy1QV44HkVrLttXzUrE8GXBHDsd2uMOr945cBnQLs7+DYPNopA==}
+  '@sveltejs/sv-utils@0.3.1':
+    resolution: {integrity: sha512-12RIq2LEeJA8v8m7vBXO8q5QyMTVjSqzJ9ZTE+baENQY4GR7jVIRFraBoUKshN6BeCkF0cCWzb2Kngono2M5CQ==}
 
   '@tybys/wasm-util@0.10.2':
     resolution: {integrity: sha512-RoBvJ2X0wuKlWFIjrwffGw1IqZHKQqzIchKaadZZfnNpsAYp2mM0h36JtPCjNDAHGgYez/15uMBpfGwchhiMgg==}
@@ -593,8 +593,8 @@ packages:
   std-env@4.1.0:
     resolution: {integrity: sha512-Rq7ybcX2RuC55r9oaPVEW7/xu3tj8u4GeBYHBWCychFtzMIr86A7e3PPEBPT37sHStKX3+TiX/Fr/ACmJLVlLQ==}
 
-  sv@0.15.3:
-    resolution: {integrity: sha512-sNvvuw6aERuwf8KqGKWtYk+H15IM4pc3l+8dwE+0U2s6rshEVg32wJ4RDyQOPgSW0/u6EbH0+uK0TSlJrYBTpA==}
+  sv@0.16.2:
+    resolution: {integrity: sha512-29eHgkOsywRCF9FR3rjU2eDNEtlzrEvDWmAGuTIFAEvfPGzaKRokFzGJ54GfLooeOFOmXsWg7i6VzyBOfh2HCw==}
     hasBin: true
 
   tinybench@2.9.0:
@@ -929,7 +929,7 @@ snapshots:
 
   '@standard-schema/spec@1.1.0': {}
 
-  '@sveltejs/sv-utils@0.2.2': {}
+  '@sveltejs/sv-utils@0.3.1': {}
 
   '@tybys/wasm-util@0.10.2':
     dependencies:
@@ -1195,9 +1195,9 @@ snapshots:
 
   std-env@4.1.0: {}
 
-  sv@0.15.3:
+  sv@0.16.2:
     dependencies:
-      '@sveltejs/sv-utils': 0.2.2
+      '@sveltejs/sv-utils': 0.3.1
 
   tinybench@2.9.0: {}
 

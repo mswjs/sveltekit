@@ -12,9 +12,26 @@ const { test, testCases } = setupTest(
         type: 'default',
         options: { [addon.id]: { environments: ['browser', 'node'] } },
       },
+      {
+        type: 'sveltekit-3',
+        options: { [addon.id]: { environments: ['browser', 'node'] } },
+      },
     ],
     filter: (testCase) => testCase.variant.includes('kit'),
     browser: false,
+    preAdd: ({ addonTestCase, cwd }) => {
+      if (addonTestCase.kind.type !== 'sveltekit-3') return
+
+      const package_json_path = path.resolve(cwd, 'package.json')
+      const package_json = JSON.parse(
+        fs.readFileSync(package_json_path, 'utf8'),
+      )
+      package_json.devDependencies['@sveltejs/kit'] = '^3.0.0-next'
+      fs.writeFileSync(
+        package_json_path,
+        JSON.stringify(package_json, null, '\t'),
+      )
+    },
   },
 )
 
@@ -23,6 +40,8 @@ test.concurrent.for(testCases)(
   async (testCase, ctx) => {
     const cwd = ctx.cwd(testCase)
     const extension = testCase.variant.includes('ts') ? 'ts' : 'js'
+    const appModule =
+      testCase.kind.type === 'sveltekit-3' ? '$app/env' : '$app/environment'
 
     const package_json = JSON.parse(
       fs.readFileSync(path.resolve(cwd, 'package.json'), 'utf8'),
@@ -51,20 +70,20 @@ test.concurrent.for(testCases)(
     expect(node).toContain("import { setupServer } from 'msw/node';")
     expect(node).toContain('setupServer(...handlers)')
 
-    const hooks_client = fs.readFileSync(
+    const hooksClient = fs.readFileSync(
       path.resolve(cwd, `src/hooks.client.${extension}`),
       'utf8',
     )
-    expect(hooks_client).toContain("import { dev } from '$app/environment';")
-    expect(hooks_client).toContain("import { worker } from './msw/browser';")
-    expect(hooks_client).toContain('export async function init()')
-    expect(hooks_client).toContain('worker.start()')
+    expectDevImport(hooksClient, appModule)
+    expect(hooksClient).toContain("import { worker } from './msw/browser';")
+    expect(hooksClient).toContain('export async function init()')
+    expect(hooksClient).toContain('worker.start()')
 
     const hooks_server = fs.readFileSync(
       path.resolve(cwd, `src/hooks.server.${extension}`),
       'utf8',
     )
-    expect(hooks_server).toContain("import { dev } from '$app/environment';")
+    expectDevImport(hooks_server, appModule)
     expect(hooks_server).toContain(
       "import { server as msw_server } from './msw/node';",
     )
@@ -74,3 +93,14 @@ test.concurrent.for(testCases)(
     )
   },
 )
+
+/**
+ * @param {string} content
+ * @param {string} module
+ */
+function expectDevImport(content, module) {
+  expect(content).toContain(`import { dev } from '${module}';`)
+  expect(content).not.toContain(
+    module === '$app/env' ? "from '$app/environment'" : "from '$app/env'",
+  )
+}
