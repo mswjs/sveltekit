@@ -1,7 +1,7 @@
 {
   "name": "@msw/sveltekit",
-  "description": "sv add-on for Mock Service Worker",
-  "version": "0.0.1",
+  "description": "SvelteKit add-on for Mock Service Worker",
+  "version": "0.0.0",
   "type": "module",
   "license": "MIT",
   "scripts": {
@@ -12,24 +12,33 @@
     "lint": "oxlint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepublishOnly": "npm run build",
-    "test": "vitest run"
+    "test": "vitest run",
+    "release": "release publish"
+  },
+  "exports": {
+    ".": "./dist/index.mjs"
   },
   "files": [
     "dist"
   ],
-  "exports": {
-    ".": {
-      "default": "./dist/index.mjs"
-    }
-  },
   "publishConfig": {
     "access": "public"
   },
+  "keywords": [
+    "sv-add",
+    "svelte",
+    "sveltekit"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mswjs/sveltekit"
+  },
+  "homepage": "https://github.com/mswjs/sveltekit",
   "peerDependencies": {
     "sv": "^0.13.0"
   },
   "devDependencies": {
+    "@ossjs/release": "^0.11.0",
     "@playwright/test": "^1.59.1",
     "@sveltejs/sv-utils": "^0.3.1",
     "@types/node": "^25.5.2",
@@ -38,10 +47,5 @@
     "sv": "^0.16.2",
     "tsdown": "^0.21.7",
     "vitest": "^4.1.3"
-  },
-  "keywords": [
-    "sv-add",
-    "svelte",
-    "sveltekit"
-  ]
+  }
 }
