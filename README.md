@@ -5,8 +5,16 @@
 
 ## Usage
 
+You can create a new SvelteKit project with this add-on using the following command:
+
+```sh
+npx sv create --add @msw/sveltekit
+```
+
+Or integrate MSW add-in into an existing project with this one:
+
 ```shell
-npx sv add @msw
+npx sv add @msw/sveltekit
 ```
 
 ## What you get
@@ -26,7 +34,7 @@ Choose where MSW should run. This is a multiselect option.
 Default: `browser,node`
 
 ```shell
-npx sv add @msw="environments:browser,node"
+npx sv add @msw/sveltekit="environments:browser,node"
 ```
 
 ## Browser worker
