@@ -1,5 +1,5 @@
 import { defineAddon, defineAddonOptions } from 'sv'
-import { color, downloadJson, transforms, defineEnv, pnpm } from './sv-utils.js'
+import { color, downloadJson, transforms, defineEnv } from './sv-utils.js'
 
 const options = defineAddonOptions()
   .add('environments', {
@@ -23,7 +23,7 @@ const options = defineAddonOptions()
   .build()
 
 const FILES = {
-  handlers: `import { http, HttpResponse } from 'msw';
+  handlers: `import { http, HttpResponse } from 'msw/http';
 
 export const handlers = [
 	http.get('/api/hello', () => {
@@ -64,7 +64,6 @@ export default defineAddon({
     sv,
     cwd,
     dependencyVersion,
-    packageManager,
   }) => {
     const mswVersion = await getMswVersion()
     const extension = language === 'ts' ? 'ts' : 'js'
@@ -73,10 +72,6 @@ export default defineAddon({
     const env = defineEnv({ sv, cwd, dependencyVersion })
 
     sv.devDependency('msw', mswVersion)
-
-    if (packageManager === 'pnpm') {
-      sv.file(file.findUp('pnpm-workspace.yaml'), pnpm.allowBuilds('msw'))
-    }
 
     sv.file(`${mocksDirectory}/handlers.${extension}`, seedFile(FILES.handlers))
 
@@ -108,6 +103,12 @@ export default defineAddon({
 })
 
 async function getMswVersion() {
+  const versionOverride = process.env.MSW_VERSION
+
+  if (versionOverride) {
+    return versionOverride
+  }
+
   const { version } = await downloadJson(
     'https://registry.npmjs.org/msw/latest',
   )
@@ -169,7 +170,7 @@ function addServerHook(env) {
 
     js.common.appendStatement(ast, {
       statement: js.common.parseStatement(`if (dev) {
-	msw_server.listen({ onUnhandledRequest: 'bypass' });
+	msw_server.listen({ onUnhandledFrame: 'bypass' });
 }`),
     })
   })

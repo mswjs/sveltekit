@@ -87,7 +87,7 @@ test.concurrent.for(testCases)(
     )
     expect(hooks_server).toContain('existing_server_hook')
     expect(hooks_server).toContain(
-      "msw_server.listen({ onUnhandledRequest: 'bypass' })",
+      "msw_server.listen({ onUnhandledFrame: 'bypass' })",
     )
   },
 )

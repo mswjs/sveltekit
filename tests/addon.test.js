@@ -46,14 +46,14 @@ test.concurrent.for(testCases)(
     const package_json = JSON.parse(
       fs.readFileSync(path.resolve(cwd, 'package.json'), 'utf8'),
     )
-    expect(package_json.devDependencies.msw).toMatch(/^\^\d+\.\d+\.\d+/)
+    expect(package_json.devDependencies.msw).toBe(process.env.MSW_VERSION)
     expect(package_json.msw.workerDirectory).toEqual(['static'])
 
     const handlers = fs.readFileSync(
       path.resolve(cwd, `src/msw/handlers.${extension}`),
       'utf8',
     )
-    expect(handlers).toContain("import { http, HttpResponse } from 'msw';")
+    expect(handlers).toContain("import { http, HttpResponse } from 'msw/http';")
     expect(handlers).toContain("http.get('/api/hello'")
 
     const browser = fs.readFileSync(
@@ -89,7 +89,7 @@ test.concurrent.for(testCases)(
     )
     expect(hooks_server).toContain('if (dev)')
     expect(hooks_server).toContain(
-      "msw_server.listen({ onUnhandledRequest: 'bypass' })",
+      "msw_server.listen({ onUnhandledFrame: 'bypass' })",
     )
   },
 )
