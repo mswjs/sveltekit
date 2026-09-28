@@ -5,7 +5,7 @@ const ONE_MINUTE = 1000 * 60
 export default defineConfig({
   test: {
     env: {
-      MSW_VERSION: 'https://pkg.pr.new/msw@2692',
+      MSW_VERSION: '3.0.0',
     },
     include: ['tests/**/*.test.{js,ts}'],
     exclude: ['tests/setup/*'],
