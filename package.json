@@ -1,7 +1,7 @@
 {
   "name": "@msw/sveltekit",
   "description": "SvelteKit add-on for Mock Service Worker",
-  "version": "0.0.0",
+  "version": "0.2.0",
   "type": "module",
   "license": "MIT",
   "packageManager": "pnpm@11.27.1",
