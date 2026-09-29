@@ -1,5 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import assert from 'node:assert/strict'
 import { expect } from 'vitest'
 import addon from '../src/index.js'
 import { setupTest } from './setup/suite.js'
@@ -16,6 +17,14 @@ const { test, testCases } = setupTest(
         type: 'sveltekit-3',
         options: { [addon.id]: { environments: ['browser', 'node'] } },
       },
+      {
+        type: 'browser-only',
+        options: { [addon.id]: { environments: ['browser'] } },
+      },
+      {
+        type: 'node-only',
+        options: { [addon.id]: { environments: ['node'] } },
+      },
     ],
     filter: (testCase) => testCase.variant.includes('kit'),
     browser: false,
@@ -31,76 +40,94 @@ const { test, testCases } = setupTest(
         package_json_path,
         JSON.stringify(package_json, null, '\t'),
       )
+      // Older cached templates have a separate config; newer ones already use Vite.
+      fs.rmSync(path.resolve(cwd, 'svelte.config.js'), { force: true })
+      const viteConfigPath = fs
+        .readdirSync(cwd)
+        .find((file) => /^vite\.config\.[jt]s$/.test(file))
+      assert(viteConfigPath, 'Expected a Vite config')
+      fs.writeFileSync(
+        path.resolve(cwd, viteConfigPath),
+        `
+import adapter from '@sveltejs/adapter-auto';
+import { sveltekit } from '@sveltejs/kit/vite';
+import { defineConfig } from 'vite';
+
+export default defineConfig({ plugins: [sveltekit({ adapter: adapter() })] });
+`,
+      )
     },
   },
 )
 
 test.concurrent.for(testCases)(
   '@msw/msw-add $kind.type $variant',
-  async (testCase, ctx) => {
+  (testCase, ctx) => {
     const cwd = ctx.cwd(testCase)
     const extension = testCase.variant.includes('ts') ? 'ts' : 'js'
-    const appModule =
-      testCase.kind.type === 'sveltekit-3' ? '$app/env' : '$app/environment'
 
     const package_json = JSON.parse(
       fs.readFileSync(path.resolve(cwd, 'package.json'), 'utf8'),
     )
-    expect(package_json.devDependencies.msw).toMatch(/^\^\d+\.\d+\.\d+/)
-    expect(package_json.msw.workerDirectory).toEqual(['static'])
+    expect(package_json.devDependencies.msw).toBe(process.env.MSW_VERSION)
+    expect(package_json.msw).toBeUndefined()
+
+    const viteConfigPath = fs
+      .readdirSync(cwd)
+      .find((file) => /^vite\.config\.[jt]s$/.test(file))
+    assert(viteConfigPath, 'Expected a Vite config')
+    const viteConfig = fs.readFileSync(
+      path.resolve(cwd, viteConfigPath),
+      'utf8',
+    )
+    expect(viteConfig).toContain("import { msw } from 'msw/vite';")
+    expect(viteConfig).toContain('msw()')
+    expect(viteConfig).toContain('sveltekit(')
+
+    const appTypes = fs.readFileSync(path.resolve(cwd, 'src/app.d.ts'), 'utf8')
+    expect(appTypes).toContain('/// <reference types="msw/vite/client" />')
 
     const handlers = fs.readFileSync(
-      path.resolve(cwd, `src/msw/handlers.${extension}`),
+      path.resolve(cwd, `src/mocks/handlers.${extension}`),
       'utf8',
     )
-    expect(handlers).toContain("import { http, HttpResponse } from 'msw';")
-    expect(handlers).toContain("http.get('/api/hello'")
+    expect(handlers).toContain("import { http, HttpResponse } from 'msw/http';")
+    expect(handlers).toContain("http.get('*/api/hello'")
 
-    const browser = fs.readFileSync(
-      path.resolve(cwd, `src/msw/browser.${extension}`),
-      'utf8',
-    )
-    expect(browser).toContain("import { setupWorker } from 'msw/browser';")
-    expect(browser).toContain('setupWorker(...handlers)')
+    for (const file of ['browser', 'node']) {
+      expect(
+        fs.existsSync(path.resolve(cwd, `src/mocks/${file}.${extension}`)),
+      ).toBe(false)
+    }
+    expect(
+      fs.existsSync(path.resolve(cwd, 'static/mockServiceWorker.js')),
+    ).toBe(false)
 
-    const node = fs.readFileSync(
-      path.resolve(cwd, `src/msw/node.${extension}`),
-      'utf8',
-    )
-    expect(node).toContain("import { setupServer } from 'msw/node';")
-    expect(node).toContain('setupServer(...handlers)')
+    const environments = testCase.kind.options[addon.id].environments
+    assert(Array.isArray(environments), 'Expected an environments array')
+    for (const [environment, target] of [
+      ['browser', 'client'],
+      ['node', 'server'],
+    ]) {
+      const hookPath = path.resolve(cwd, `src/hooks.${target}.${extension}`)
+      if (!environments.includes(environment)) {
+        expect(fs.existsSync(hookPath)).toBe(false)
+        continue
+      }
 
-    const hooksClient = fs.readFileSync(
-      path.resolve(cwd, `src/hooks.client.${extension}`),
-      'utf8',
-    )
-    expectDevImport(hooksClient, appModule)
-    expect(hooksClient).toContain("import { worker } from './msw/browser';")
-    expect(hooksClient).toContain('export async function init()')
-    expect(hooksClient).toContain('worker.start()')
-
-    const hooks_server = fs.readFileSync(
-      path.resolve(cwd, `src/hooks.server.${extension}`),
-      'utf8',
-    )
-    expectDevImport(hooks_server, appModule)
-    expect(hooks_server).toContain(
-      "import { server as msw_server } from './msw/node';",
-    )
-    expect(hooks_server).toContain('if (dev)')
-    expect(hooks_server).toContain(
-      "msw_server.listen({ onUnhandledRequest: 'bypass' })",
-    )
+      const hook = fs.readFileSync(hookPath, 'utf8')
+      expect(hook).toContain('export const init = async () =>')
+      expect(hook).toContain('if (import.meta.env.DEV)')
+      expect(hook).toContain(
+        '// Use import.meta.env.DEV so Vite drops MSW imports before dependency discovery.',
+      )
+      expect(hook).toContain(
+        "// SvelteKit's dev is folded later and can leave unused MSW assets in production.",
+      )
+      expect(hook).toContain("await import('virtual:msw')")
+      expect(hook).toContain("await import('./mocks/handlers')")
+      expect(hook).toContain('network.configure({ handlers })')
+      expect(hook).toContain('await network.enable()')
+    }
   },
 )
-
-/**
- * @param {string} content
- * @param {string} module
- */
-function expectDevImport(content, module) {
-  expect(content).toContain(`import { dev } from '${module}';`)
-  expect(content).not.toContain(
-    module === '$app/env' ? "from '$app/environment'" : "from '$app/env'",
-  )
-}

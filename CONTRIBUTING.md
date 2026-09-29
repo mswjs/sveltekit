@@ -8,13 +8,13 @@ Some convenient scripts are provided to help develop the add-on.
 
 ```sh
 ## create a new minimal project in the `demo` directory
-npm run demo-create
+pnpm demo-create
 
 ## add your current add-on to the demo project
-npm run demo-add
+pnpm demo-add
 
 ## run the tests
-npm run test
+pnpm test
 ```
 
 ## Key things to note
@@ -29,7 +29,7 @@ Your `add-on` should:
 Your add-on is bundled with [tsdown](https://tsdown.dev/) into a single file in `dist/`. This bundles everything except `sv` (which is a peer dependency provided at runtime).
 
 ```sh
-npm run build
+pnpm build
 ```
 
 ## Publishing
@@ -37,8 +37,8 @@ npm run build
 When you're ready to publish your add-on to npm:
 
 ```sh
-npm login
-npm publish
+pnpm login
+pnpm publish
 ```
 
 > `prepublishOnly` will automatically run the build before publishing.
