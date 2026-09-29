@@ -40,8 +40,8 @@ const { test, testCases } = setupTest(
         package_json_path,
         JSON.stringify(package_json, null, '\t'),
       )
-      // Kit 3 configures SvelteKit through the Vite plugin.
-      fs.unlinkSync(path.resolve(cwd, 'svelte.config.js'))
+      // Older cached templates have a separate config; newer ones already use Vite.
+      fs.rmSync(path.resolve(cwd, 'svelte.config.js'), { force: true })
       const viteConfigPath = fs
         .readdirSync(cwd)
         .find((file) => /^vite\.config\.[jt]s$/.test(file))
