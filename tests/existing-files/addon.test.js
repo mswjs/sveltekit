@@ -19,21 +19,21 @@ const { test, testCases } = setupTest(
     browser: false,
     preAdd: ({ addonTestCase, cwd }) => {
       const extension = addonTestCase.variant.includes('ts') ? 'ts' : 'js'
-      const msw_directory = path.resolve(cwd, 'src/msw')
+      const mocks_directory = path.resolve(cwd, 'src/mocks')
 
-      fs.mkdirSync(msw_directory, { recursive: true })
+      fs.mkdirSync(mocks_directory, { recursive: true })
       fs.writeFileSync(
-        path.resolve(msw_directory, `handlers.${extension}`),
+        path.resolve(mocks_directory, `handlers.${extension}`),
         "export const handlers = ['existing handlers'];\n",
         'utf8',
       )
       fs.writeFileSync(
-        path.resolve(msw_directory, `browser.${extension}`),
+        path.resolve(mocks_directory, `browser.${extension}`),
         "export const worker = 'existing worker';\n",
         'utf8',
       )
       fs.writeFileSync(
-        path.resolve(msw_directory, `node.${extension}`),
+        path.resolve(mocks_directory, `node.${extension}`),
         "export const server = 'existing server';\n",
         'utf8',
       )
@@ -71,19 +71,19 @@ test.concurrent.for(testCases)(
     const extension = testCase.variant.includes('ts') ? 'ts' : 'js'
 
     const handlers = fs.readFileSync(
-      path.resolve(cwd, `src/msw/handlers.${extension}`),
+      path.resolve(cwd, `src/mocks/handlers.${extension}`),
       'utf8',
     )
     expect(handlers).toBe("export const handlers = ['existing handlers'];\n")
 
     const browser = fs.readFileSync(
-      path.resolve(cwd, `src/msw/browser.${extension}`),
+      path.resolve(cwd, `src/mocks/browser.${extension}`),
       'utf8',
     )
     expect(browser).toBe("export const worker = 'existing worker';\n")
 
     const node = fs.readFileSync(
-      path.resolve(cwd, `src/msw/node.${extension}`),
+      path.resolve(cwd, `src/mocks/node.${extension}`),
       'utf8',
     )
     expect(node).toBe("export const server = 'existing server';\n")

@@ -49,7 +49,7 @@ export default defineAddon({
   run: async ({ directory, file, language, options, sv }) => {
     const mswVersion = await getMswVersion()
     const extension = language === 'ts' ? 'ts' : 'js'
-    const mocksDirectory = `${directory.src}/msw`
+    const mocksDirectory = `${directory.src}/mocks`
 
     sv.devDependency('msw', mswVersion)
 
@@ -67,7 +67,7 @@ export default defineAddon({
   },
 
   nextSteps: () => [
-    'Edit your request handlers in ' + color.path('src/msw/handlers'),
+    'Edit your request handlers in ' + color.path('src/mocks/handlers'),
   ],
 })
 
@@ -118,7 +118,7 @@ function addInitHook() {
   return transforms.script(({ ast, js, comments, content }) => {
     let setup = js.common.parseStatement(`if (import.meta.env.DEV) {
 	const { network } = await import('virtual:msw');
-	const { handlers } = await import('./msw/handlers');
+	const { handlers } = await import('./mocks/handlers');
 
 	network.configure({ handlers });
 	await network.enable();

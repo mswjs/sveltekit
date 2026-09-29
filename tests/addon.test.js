@@ -88,7 +88,7 @@ test.concurrent.for(testCases)(
     expect(appTypes).toContain('/// <reference types="msw/vite/client" />')
 
     const handlers = fs.readFileSync(
-      path.resolve(cwd, `src/msw/handlers.${extension}`),
+      path.resolve(cwd, `src/mocks/handlers.${extension}`),
       'utf8',
     )
     expect(handlers).toContain("import { http, HttpResponse } from 'msw/http';")
@@ -96,7 +96,7 @@ test.concurrent.for(testCases)(
 
     for (const file of ['browser', 'node']) {
       expect(
-        fs.existsSync(path.resolve(cwd, `src/msw/${file}.${extension}`)),
+        fs.existsSync(path.resolve(cwd, `src/mocks/${file}.${extension}`)),
       ).toBe(false)
     }
     expect(
@@ -125,7 +125,7 @@ test.concurrent.for(testCases)(
         "// SvelteKit's dev is folded later and can leave unused MSW assets in production.",
       )
       expect(hook).toContain("await import('virtual:msw')")
-      expect(hook).toContain("await import('./msw/handlers')")
+      expect(hook).toContain("await import('./mocks/handlers')")
       expect(hook).toContain('network.configure({ handlers })')
       expect(hook).toContain('await network.enable()')
     }

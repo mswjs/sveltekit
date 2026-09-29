@@ -20,7 +20,7 @@ npx sv add @msw/sveltekit
 ## What you get
 
 - `msw` added as a dev dependency.
-- `src/msw/handlers.ts` or `src/msw/handlers.js` with shared request handlers.
+- `src/mocks/handlers.ts` or `src/mocks/handlers.js` with shared request handlers.
 - The `msw()` plugin from `msw/vite` added to your Vite config.
 - Optional browser and server setup in the corresponding `src/hooks.client` and `src/hooks.server` `init` hooks.
 - Types for `virtual:msw` referenced in `src/app.d.ts`.
