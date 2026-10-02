@@ -49,10 +49,43 @@ jobs:
           path: dist
           if-no-files-found: error
 
+  compatibility:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        sv: ['0.13.1', '0.17.1', '1.0.0', '1.0.1']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093
+        with:
+          version: 11.27.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: 24
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build published entry point
+        run: pnpm build
+
+      - name: Install CLI version under test
+        run: pnpm add --save-dev sv@${{ matrix.sv }}
+
+      - name: Test published entry point
+        run: pnpm test:compatibility
+
   release:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: build
+    needs: [build, compatibility]
     permissions:
       contents: read
       id-token: write
