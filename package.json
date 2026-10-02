@@ -14,6 +14,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
+    "test:compatibility": "node --test tests/compatibility.test.mjs",
     "release": "release publish"
   },
   "exports": {
@@ -40,16 +41,16 @@
   },
   "homepage": "https://github.com/mswjs/sveltekit",
   "peerDependencies": {
-    "sv": "^0.13.0"
+    "sv": "^1.0.0 || >=0.13.1 <1.0.0"
   },
   "devDependencies": {
     "@ossjs/release": "^0.11.2",
     "@playwright/test": "^1.63.0",
-    "@sveltejs/sv-utils": "^0.3.3",
+    "@sveltejs/sv-utils": "^1.0.0",
     "@types/node": "^26.6.3",
     "oxlint": "^1.85.0",
     "prettier": "^3.9.9",
-    "sv": "^0.17.1",
+    "sv": "^1.0.1",
     "tsdown": "^0.23.0",
     "vitest": "^5.0.2"
   }

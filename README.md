@@ -17,6 +17,15 @@ Or integrate MSW add-in into an existing project with this one:
 npx sv add @msw/sveltekit
 ```
 
+## CLI compatibility
+
+Supports `sv` versions `>=0.13.1 <2.0.0`. The published add-on is tested against
+`0.13.1`, `0.17.1`, `1.0.0`, and `1.0.1`. Its `sv-utils` dependency is bundled.
+
+Older `sv` versions may show a major-version compatibility warning even though
+they are supported: the CLI checks a single major version rather than the full
+peer dependency range. Use `npx sv@latest add @msw/sveltekit` to avoid that warning.
+
 ## What you get
 
 - `msw` added as a dev dependency.

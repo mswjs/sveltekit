@@ -15,6 +15,10 @@ pnpm demo-add
 
 ## run the tests
 pnpm test
+
+## test the published entry point against the installed sv version
+pnpm build
+pnpm test:compatibility
 ```
 
 ## Key things to note
